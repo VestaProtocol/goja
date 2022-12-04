@@ -2,11 +2,12 @@ package ftoa
 
 import (
 	"math"
+	"math/big"
 	"strconv"
 	"testing"
 )
 
-func _testFToStr(num float64, mode FToStrMode, precision int, expected string, t *testing.T) {
+func _testFToStr(num big.Float, mode FToStrMode, precision int, expected string, t *testing.T) {
 	buf := FToStr(num, mode, precision, nil)
 	if s := string(buf); s != expected {
 		t.Fatalf("expected: '%s', actual: '%s", expected, s)
@@ -16,7 +17,7 @@ func _testFToStr(num float64, mode FToStrMode, precision int, expected string, t
 	}
 }
 
-func testFToStr(num float64, mode FToStrMode, precision int, expected string, t *testing.T) {
+func testFToStr(num big.Float, mode FToStrMode, precision int, expected string, t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		t.Parallel()
 		_testFToStr(num, mode, precision, expected, t)

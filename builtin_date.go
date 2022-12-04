@@ -3,6 +3,7 @@ package goja
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"time"
 )
 
@@ -31,7 +32,7 @@ func (r *Runtime) makeDate(args []Value, utc bool) (t time.Time, valid bool) {
 			if i, ok := pv.(valueInt); ok {
 				n = int64(i)
 			} else if f, ok := pv.(valueFloat); ok {
-				f := float64(f)
+				f := big.Float(f)
 				if math.IsNaN(f) || math.IsInf(f, 0) {
 					return
 				}
@@ -143,7 +144,7 @@ func (r *Runtime) dateproto_toJSON(call FunctionCall) Value {
 	obj := call.This.ToObject(r)
 	tv := obj.toPrimitiveNumber()
 	if f, ok := tv.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if math.IsNaN(f) || math.IsInf(f, 0) {
 			return _null
 		}
@@ -454,7 +455,7 @@ func (r *Runtime) dateproto_getTimezoneOffset(call FunctionCall) Value {
 	if d, ok := obj.self.(*dateObject); ok {
 		if d.isSet() {
 			_, offset := d.time().Zone()
-			return floatToValue(float64(-offset) / 60)
+			return floatToValue(big.Float(-offset) / 60)
 		} else {
 			return _NaN
 		}

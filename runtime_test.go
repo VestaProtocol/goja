@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -487,8 +488,8 @@ func TestRuntime_ExportToNumbers(t *testing.T) {
 		}
 	})
 
-	t.Run("float64", func(t *testing.T) {
-		var f float64
+	t.Run("big.Float", func(t *testing.T) {
+		var f big.Float
 		err := vm.ExportTo(vm.ToValue(1.234567), &f)
 		if err != nil {
 			t.Fatal(err)
@@ -509,8 +510,8 @@ func TestRuntime_ExportToNumbers(t *testing.T) {
 		}
 	})
 
-	t.Run("float64/object", func(t *testing.T) {
-		var f float64
+	t.Run("big.Float/object", func(t *testing.T) {
+		var f big.Float
 		err := vm.ExportTo(vm.NewObject(), &f)
 		if err != nil {
 			t.Fatal(err)
@@ -519,7 +520,6 @@ func TestRuntime_ExportToNumbers(t *testing.T) {
 			t.Fatalf("f: %f", f)
 		}
 	})
-
 }
 
 func TestRuntime_ExportToSlice(t *testing.T) {
@@ -624,7 +624,6 @@ func TestRuntime_ExportToStruct(t *testing.T) {
 	if o.Test != "1" {
 		t.Fatalf("Unexpected value: '%s'", o.Test)
 	}
-
 }
 
 func TestRuntime_ExportToStructPtr(t *testing.T) {
@@ -649,7 +648,6 @@ func TestRuntime_ExportToStructPtr(t *testing.T) {
 	if o.Test != "1" {
 		t.Fatalf("Unexpected value: '%s'", o.Test)
 	}
-
 }
 
 func TestRuntime_ExportToStructAnonymous(t *testing.T) {
@@ -692,7 +690,6 @@ func TestRuntime_ExportToStructAnonymous(t *testing.T) {
 	if test.C != "testC" {
 		t.Fatalf("Unexpected value: '%s'", test.C)
 	}
-
 }
 
 func TestRuntime_ExportToStructFromPtr(t *testing.T) {
@@ -767,7 +764,6 @@ func TestRuntime_ExportToStructWithPtrValues(t *testing.T) {
 	if test.D == nil || test.D.E != "testE" {
 		t.Fatalf("Unexpected value: '%s'", test.D.E)
 	}
-
 }
 
 func TestRuntime_ExportToTime(t *testing.T) {
@@ -1049,7 +1045,7 @@ func TestToValueNil(t *testing.T) {
 
 func TestToValueFloat(t *testing.T) {
 	vm := New()
-	vm.Set("f64", float64(123))
+	vm.Set("f64", big.Float(123))
 	vm.Set("f32", float32(321))
 
 	v, err := vm.RunString("f64 === 123 && f32 === 321")
@@ -1062,7 +1058,6 @@ func TestToValueFloat(t *testing.T) {
 }
 
 func TestToValueInterface(t *testing.T) {
-
 	f := func(i interface{}) bool {
 		return i == t
 	}
@@ -2035,7 +2030,6 @@ func ExampleRuntime_SetParserOptions() {
 	res, err := vm.RunString(`
 	"I did not hang!";
 //# sourceMappingURL=/dev/zero`)
-
 	if err != nil {
 		panic(err)
 	}
@@ -2526,7 +2520,6 @@ function foo(a,b,c)
 func BenchmarkCallReflect(b *testing.B) {
 	vm := New()
 	vm.Set("f", func(v Value) {
-
 	})
 
 	prg := MustCompile("test.js", "f(null)", true)
@@ -2600,7 +2593,7 @@ func BenchmarkAsciiStringMapGet(b *testing.B) {
 		m[asciiString(strconv.Itoa(i))] = intToValue(int64(i))
 	}
 	b.ResetTimer()
-	var key = asciiString("50")
+	key := asciiString("50")
 	for i := 0; i < b.N; i++ {
 		if m[key] == nil {
 			b.Fatal()

@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"hash/maphash"
 	"math"
+	"math/big"
 	"math/bits"
 	"math/rand"
 	"reflect"
@@ -23,7 +24,7 @@ import (
 )
 
 const (
-	sqrt1_2 float64 = math.Sqrt2 / 2
+	sqrt1_2 big.Float = math.Sqrt2 / 2
 
 	deoptimiseRegexp = false
 )
@@ -160,7 +161,7 @@ func ToFlag(b bool) Flag {
 	return FLAG_FALSE
 }
 
-type RandSource func() float64
+type RandSource func() big.Float
 
 type Now func() time.Time
 
@@ -745,7 +746,6 @@ func (r *Runtime) newNativeFunc(call func(FunctionCall) Value, construct func(ar
 }
 
 func (r *Runtime) newWrappedFunc(value reflect.Value) *Object {
-
 	v := &Object{runtime: r}
 
 	f := &wrappedFuncObject{
@@ -983,7 +983,7 @@ func toInt8(v Value) int8 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return int8(int64(f))
 		}
@@ -998,7 +998,7 @@ func toUint8(v Value) uint8 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return uint8(int64(f))
 		}
@@ -1019,7 +1019,7 @@ func toUint8Clamp(v Value) uint8 {
 	}
 
 	if num, ok := v.(valueFloat); ok {
-		num := float64(num)
+		num := big.Float(num)
 		if !math.IsNaN(num) {
 			if num < 0 {
 				return 0
@@ -1052,7 +1052,7 @@ func toInt16(v Value) int16 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return int16(int64(f))
 		}
@@ -1067,7 +1067,7 @@ func toUint16(v Value) uint16 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return uint16(int64(f))
 		}
@@ -1082,7 +1082,7 @@ func toInt32(v Value) int32 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return int32(int64(f))
 		}
@@ -1097,7 +1097,7 @@ func toUint32(v Value) uint32 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return uint32(int64(f))
 		}
@@ -1112,7 +1112,7 @@ func toInt64(v Value) int64 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return int64(f)
 		}
@@ -1127,7 +1127,7 @@ func toUint64(v Value) uint64 {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return uint64(int64(f))
 		}
@@ -1142,7 +1142,7 @@ func toInt(v Value) int {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return int(f)
 		}
@@ -1157,7 +1157,7 @@ func toUint(v Value) uint {
 	}
 
 	if f, ok := v.(valueFloat); ok {
-		f := float64(f)
+		f := big.Float(f)
 		if !math.IsNaN(f) && !math.IsInf(f, 0) {
 			return uint(int64(f))
 		}
@@ -1191,7 +1191,7 @@ repeat:
 		intVal = int64(num)
 	case valueFloat:
 		if v != _negativeZero {
-			if i, ok := floatToInt(float64(num)); ok {
+			if i, ok := floatToInt(big.Float(num)); ok {
 				intVal = i
 			} else {
 				goto fail
@@ -1205,7 +1205,7 @@ repeat:
 		n2 := toUint32(v)
 		n1 := v.ToNumber()
 		if f, ok := n1.(valueFloat); ok {
-			f := float64(f)
+			f := big.Float(f)
 			if f != 0 || !math.Signbit(f) {
 				goto fail
 			}
@@ -1371,7 +1371,6 @@ func (r *Runtime) RunString(str string) (Value, error) {
 // RunScript executes the given string in the global context.
 func (r *Runtime) RunScript(name, src string) (Value, error) {
 	p, err := r.compile(name, src, false, true, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1777,7 +1776,7 @@ func (r *Runtime) toValue(i interface{}, origValue reflect.Value) Value {
 		if uint64(i) <= math.MaxInt64 {
 			return intToValue(int64(i))
 		} else {
-			return floatToValue(float64(i))
+			return floatToValue(big.Float(i))
 		}
 	case uint8:
 		return intToValue(int64(i))
@@ -1789,10 +1788,10 @@ func (r *Runtime) toValue(i interface{}, origValue reflect.Value) Value {
 		if i <= math.MaxInt64 {
 			return intToValue(int64(i))
 		}
-		return floatToValue(float64(i))
+		return floatToValue(big.Float(i))
 	case float32:
-		return floatToValue(float64(i))
-	case float64:
+		return floatToValue(big.Float(i))
+	case big.Float:
 		return floatToValue(i)
 	case map[string]interface{}:
 		if i == nil {
@@ -2435,7 +2434,7 @@ func IsNull(v Value) bool {
 // IsNaN returns true if the supplied value is NaN.
 func IsNaN(v Value) bool {
 	f, ok := v.(valueFloat)
-	return ok && math.IsNaN(float64(f))
+	return ok && math.IsNaN(big.Float(f))
 }
 
 // IsInfinity returns true if the supplied is (+/-)Infinity

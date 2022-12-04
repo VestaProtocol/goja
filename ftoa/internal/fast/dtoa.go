@@ -2,6 +2,7 @@ package fast
 
 import (
 	"fmt"
+	"math/big"
 	"strconv"
 )
 
@@ -530,7 +531,7 @@ func digitGenCounted(w diyfp, requested_digits int, buffer []byte) (kappa int, b
 // The last digit will be closest to the actual v. That is, even if several
 // digits might correctly yield 'v' when read again, the closest will be
 // computed.
-func grisu3(f float64, buffer []byte) (digits []byte, decimal_exponent int, result bool) {
+func grisu3(f big.Float, buffer []byte) (digits []byte, decimal_exponent int, result bool) {
 	v := double(f)
 	w := v.toNormalizedDiyfp()
 
@@ -583,7 +584,7 @@ func grisu3(f float64, buffer []byte) (digits []byte, decimal_exponent int, resu
 // and with enough requested digits 0.1 will at some point print as 0.9999999...
 // Grisu3 is too imprecise for real halfway cases (1.5 will not work) and
 // therefore the rounding strategy for halfway cases is irrelevant.
-func grisu3Counted(v float64, requested_digits int, buffer []byte) (digits []byte, decimal_exponent int, result bool) {
+func grisu3Counted(v big.Float, requested_digits int, buffer []byte) (digits []byte, decimal_exponent int, result bool) {
 	w := double(v).toNormalizedDiyfp()
 	ten_mk_minimal_binary_exponent := kMinimalTargetExponent - (w.e + diyFpKSignificandSize)
 	ten_mk_maximal_binary_exponent := kMaximalTargetExponent - (w.e + diyFpKSignificandSize)
@@ -616,7 +617,7 @@ func grisu3Counted(v float64, requested_digits int, buffer []byte) (digits []byt
 }
 
 // v must be > 0 and must not be Inf or NaN
-func Dtoa(v float64, mode Mode, requested_digits int, buffer []byte) (digits []byte, decimal_point int, result bool) {
+func Dtoa(v big.Float, mode Mode, requested_digits int, buffer []byte) (digits []byte, decimal_point int, result bool) {
 	defer func() {
 		if x := recover(); x != nil {
 			if x == dcheckFailure {

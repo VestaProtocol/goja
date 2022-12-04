@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
 	"strings"
 	"testing"
@@ -118,7 +119,6 @@ func TestGoReflectEnumerate(t *testing.T) {
 	if !v.StrictEquals(valueTrue) {
 		t.Fatalf("Expected true, got %v", v)
 	}
-
 }
 
 func TestGoReflectCustomIntUnbox(t *testing.T) {
@@ -365,7 +365,6 @@ func TestGoReflectRedefineFieldSuccess(t *testing.T) {
 	if o.Test != "AAA" {
 		t.Fatalf("Expected 'AAA', got '%s'", o.Test)
 	}
-
 }
 
 func TestGoReflectRedefineFieldNonWritable(t *testing.T) {
@@ -567,7 +566,6 @@ func (jsonTagNamer) MethodName(_ reflect.Type, method reflect.Method) string {
 }
 
 func TestGoReflectCustomNaming(t *testing.T) {
-
 	type testStructWithJsonTags struct {
 		A string `json:"b"` // <-- script sees field "A" as property "b"
 	}
@@ -609,7 +607,6 @@ func TestGoReflectCustomNaming(t *testing.T) {
 }
 
 func TestGoReflectCustomObjNaming(t *testing.T) {
-
 	type testStructWithJsonTags struct {
 		A string `json:"b"` // <-- script sees field "A" as property "b"
 	}
@@ -734,8 +731,7 @@ func TestStructNonAddressable(t *testing.T) {
 	}
 }
 
-type testFieldMapper struct {
-}
+type testFieldMapper struct{}
 
 func (testFieldMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
 	if tag := f.Tag.Get("js"); tag != "" {
@@ -971,7 +967,6 @@ func TestNestedStructSet(t *testing.T) {
 }
 
 func TestStructNonAddressableAnonStruct(t *testing.T) {
-
 	type C struct {
 		Z int64
 		X string
@@ -1012,7 +1007,6 @@ func TestStructNonAddressableAnonStruct(t *testing.T) {
 	if expected != v.String() {
 		t.Fatalf("Expected '%s', got '%s'", expected, v.String())
 	}
-
 }
 
 func TestTagFieldNameMapperInvalidId(t *testing.T) {
@@ -1148,12 +1142,11 @@ func TestGoReflectSymbols(t *testing.T) {
 }
 
 func TestGoReflectSymbolEqualityQuirk(t *testing.T) {
-	type Field struct {
-	}
+	type Field struct{}
 	type S struct {
 		Field *Field
 	}
-	var s = S{
+	s := S{
 		Field: &Field{},
 	}
 	vm := New()
@@ -1231,7 +1224,7 @@ func TestGoReflectUnicodeProps(t *testing.T) {
 
 func TestGoReflectPreserveType(t *testing.T) {
 	vm := New()
-	var expect = time.Duration(math.MaxInt64)
+	expect := time.Duration(math.MaxInt64)
 	vm.Set(`make`, func() time.Duration {
 		return expect
 	})
@@ -1287,7 +1280,6 @@ func TestGoReflectCopyOnWrite(t *testing.T) {
 			throw new Error("tmp.Field (2): " + tmp.Field);
 		}
 	`)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1306,7 +1298,6 @@ func TestReflectSetReflectValue(t *testing.T) {
 			throw new Error();
 		}
 	`)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1429,7 +1420,7 @@ func TestGoReflectToPrimitive(t *testing.T) {
 			f("ui.valueOf()", intToValue(1), t)
 		})
 
-		type Float float64
+		type Float big.Float
 		var fl Float = 1.1
 
 		t.Run("Float", func(t *testing.T) {
@@ -1521,8 +1512,7 @@ func TestGoReflectToPrimitive(t *testing.T) {
 	})
 }
 
-type testGoReflectFuncRt struct {
-}
+type testGoReflectFuncRt struct{}
 
 func (*testGoReflectFuncRt) M(call FunctionCall, r *Runtime) Value {
 	if r == nil {

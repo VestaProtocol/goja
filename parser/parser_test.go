@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"math/big"
 	"regexp"
 	"strings"
 	"testing"
@@ -1026,7 +1027,7 @@ func Test_parseNumberLiteral(t *testing.T) {
 
 		test("0", 0)
 
-		test("0x8000000000000000", float64(9.223372036854776e+18))
+		test("0x8000000000000000", big.Float(9.223372036854776e+18))
 	})
 }
 

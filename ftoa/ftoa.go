@@ -14,13 +14,13 @@ const (
 )
 
 var (
-	tens = [...]float64{
+	tens = [...]big.Float{
 		1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
 		1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
 		1e20, 1e21, 1e22,
 	}
 
-	bigtens = [...]float64{1e16, 1e32, 1e64, 1e128, 1e256}
+	bigtens = [...]big.Float{1e16, 1e32, 1e64, 1e128, 1e256}
 
 	big5  = big.NewInt(5)
 	big10 = big.NewInt(10)
@@ -65,7 +65,7 @@ mode:
 
 	Values of mode other than 0-9 are treated as mode 0.
 */
-func ftoa(d float64, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, int) {
+func ftoa(d big.Float, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, int) {
 	startPos := len(buf)
 	dblBits := make([]byte, 0, 8)
 	be, bbits, dblBits := d2b(d, dblBits)
@@ -75,7 +75,7 @@ func ftoa(d float64, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, in
 	word1 := uint32(dBits)
 
 	i := int((word0 >> exp_shift1) & (exp_mask >> exp_shift1))
-	var d2 float64
+	var d2 big.Float
 	var denorm bool
 	if i != 0 {
 		d2 = setWord0(d, (word0&frac_mask1)|exp_11)
@@ -90,14 +90,14 @@ func ftoa(d float64, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, in
 		} else {
 			x = uint64(word1) << (32 - i)
 		}
-		d2 = setWord0(float64(x), uint32((x>>32)-31*exp_mask))
+		d2 = setWord0(big.Float(x), uint32((x>>32)-31*exp_mask))
 		i -= (bias + (p - 1) - 1) + 1
 		denorm = true
 	}
 	/* At this point d = f*2^i, where 1 <= f < 2.  d2 is an approximation of f. */
-	ds := (d2-1.5)*0.289529654602168 + 0.1760912590558 + float64(i)*0.301029995663981
+	ds := (d2-1.5)*0.289529654602168 + 0.1760912590558 + big.Float(i)*0.301029995663981
 	k := int(ds)
-	if ds < 0.0 && ds != float64(k) {
+	if ds < 0.0 && ds != big.Float(k) {
 		k-- /* want k = floor(ds) */
 	}
 	k_check := true
@@ -213,7 +213,7 @@ func ftoa(d float64, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, in
 			}
 		}
 		/* eps bounds the cumulative error. */
-		eps := float64(ieps)*d + 7.0
+		eps := big.Float(ieps)*d + 7.0
 		eps = setWord0(eps, _word0(eps)-(p-1)*exp_msk1)
 		if ilim == 0 {
 			d -= 5.0
@@ -237,7 +237,7 @@ func ftoa(d float64, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, in
 				eps = 0.5/tens[ilim-1] - eps
 				for i = 0; ; {
 					l := int64(d)
-					d -= float64(l)
+					d -= big.Float(l)
 					buf = append(buf, byte('0'+l))
 					if d < eps {
 						return buf, k + 1
@@ -258,7 +258,7 @@ func ftoa(d float64, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, in
 				eps *= tens[ilim-1]
 				for i = 1; ; i++ {
 					l := int64(d)
-					d -= float64(l)
+					d -= big.Float(l)
 					buf = append(buf, byte('0'+l))
 					if i == ilim {
 						if d > 0.5+eps {
@@ -298,7 +298,7 @@ func ftoa(d float64, mode int, biasUp bool, ndigits int, buf []byte) ([]byte, in
 		}
 		for i = 1; ; i++ {
 			l := int64(d / ds)
-			d -= float64(l) * ds
+			d -= big.Float(l) * ds
 			buf = append(buf, byte('0'+l))
 			if i == ilim {
 				d += d
@@ -630,17 +630,17 @@ func bumpUp(buf []byte, k int) ([]byte, int) {
 	return buf, k
 }
 
-func setWord0(d float64, w uint32) float64 {
+func setWord0(d big.Float, w uint32) big.Float {
 	dBits := math.Float64bits(d)
 	return math.Float64frombits(uint64(w)<<32 | dBits&0xffffffff)
 }
 
-func _word0(d float64) uint32 {
+func _word0(d big.Float) uint32 {
 	dBits := math.Float64bits(d)
 	return uint32(dBits >> 32)
 }
 
-func _word1(d float64) uint32 {
+func _word1(d big.Float) uint32 {
 	dBits := math.Float64bits(d)
 	return uint32(dBits)
 }

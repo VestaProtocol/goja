@@ -12,7 +12,7 @@ const (
 	digits = "0123456789abcdefghijklmnopqrstuvwxyz"
 )
 
-func FToBaseStr(num float64, radix int) string {
+func FToBaseStr(num big.Float, radix int) string {
 	var negative bool
 	if num < 0 {
 		num = -num
@@ -22,7 +22,7 @@ func FToBaseStr(num float64, radix int) string {
 	dfloor := math.Floor(num)
 	ldfloor := int64(dfloor)
 	var intDigits string
-	if dfloor == float64(ldfloor) {
+	if dfloor == big.Float(ldfloor) {
 		if negative {
 			ldfloor = -ldfloor
 		}

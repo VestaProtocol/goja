@@ -4,6 +4,7 @@ import (
 	"hash/maphash"
 	"io"
 	"math"
+	"math/big"
 	"reflect"
 	"strings"
 	"unicode/utf16"
@@ -67,10 +68,10 @@ func (i *importedString) String() string {
 	return i.s
 }
 
-func (i *importedString) ToFloat() float64 {
+func (i *importedString) ToFloat() big.Float {
 	i.ensureScanned()
 	if i.u != nil {
-		return math.NaN()
+		return *big.NewFloat(math.NaN())
 	}
 	return asciiString(i.s).ToFloat()
 }

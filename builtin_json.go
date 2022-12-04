@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/big"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -56,7 +57,7 @@ func (r *Runtime) builtinJSON_decodeToken(d *json.Decoder, tok json.Token) (Valu
 		return _null, nil
 	case string:
 		return newStringValue(tok), nil
-	case float64:
+	case big.Float:
 		return floatToValue(tok), nil
 	case bool:
 		if tok {
@@ -346,7 +347,7 @@ func (ctx *_builtinJSON_stringifyContext) str(key Value, holder *Object) bool {
 	case valueInt:
 		ctx.buf.WriteString(value.String())
 	case valueFloat:
-		if !math.IsNaN(float64(value1)) && !math.IsInf(float64(value1), 0) {
+		if !math.IsNaN(big.Float(value1)) && !math.IsInf(big.Float(value1), 0) {
 			ctx.buf.WriteString(value.String())
 		} else {
 			ctx.buf.WriteString("null")

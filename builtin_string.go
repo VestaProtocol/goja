@@ -1,11 +1,13 @@
 package goja
 
 import (
-	"github.com/dop251/goja/unistring"
 	"math"
+	"math/big"
 	"strings"
 	"unicode/utf16"
 	"unicode/utf8"
+
+	"github.com/dop251/goja/unistring"
 
 	"github.com/dop251/goja/parser"
 	"golang.org/x/text/collate"
@@ -341,7 +343,7 @@ func (r *Runtime) stringproto_lastIndexOf(call FunctionCall) Value {
 	numPos := call.Argument(1).ToNumber()
 
 	var pos int64
-	if f, ok := numPos.(valueFloat); ok && math.IsNaN(float64(f)) {
+	if f, ok := numPos.(valueFloat); ok && math.IsNaN(big.Float(f)) {
 		pos = int64(value.length())
 	} else {
 		pos = numPos.ToInteger()

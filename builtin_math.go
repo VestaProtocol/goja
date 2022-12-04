@@ -2,6 +2,7 @@ package goja
 
 import (
 	"math"
+	"math/big"
 	"math/bits"
 )
 
@@ -73,13 +74,13 @@ func (r *Runtime) math_floor(call FunctionCall) Value {
 }
 
 func (r *Runtime) math_fround(call FunctionCall) Value {
-	return floatToValue(float64(float32(call.Argument(0).ToFloat())))
+	return floatToValue(big.Float(float32(call.Argument(0).ToFloat())))
 }
 
 func (r *Runtime) math_hypot(call FunctionCall) Value {
-	var max float64
+	var max big.Float
 	var hasNaN bool
-	absValues := make([]float64, 0, len(call.Arguments))
+	absValues := make([]big.Float, 0, len(call.Arguments))
 	for _, v := range call.Arguments {
 		arg := nilSafe(v).ToFloat()
 		if math.IsNaN(arg) {
@@ -104,7 +105,7 @@ func (r *Runtime) math_hypot(call FunctionCall) Value {
 
 	// Kahan summation to avoid rounding errors.
 	// Normalize the numbers to the largest one to avoid overflow.
-	var sum, compensation float64
+	var sum, compensation big.Float
 	for _, n := range absValues {
 		n /= max
 		summand := n*n - compensation

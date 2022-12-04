@@ -1,6 +1,9 @@
 package fast
 
-import "math"
+import (
+	"math"
+	"math/big"
+)
 
 const (
 	diyFpKSignificandSize        = 64
@@ -16,7 +19,7 @@ const (
 	kDenormalExponent        = -kExponentBias + 1
 )
 
-type double float64
+type double big.Float
 
 type diyfp struct {
 	f uint64
@@ -140,7 +143,7 @@ func (d double) toDiyFp() diyfp {
 }
 
 func (d double) sigExp() (significand uint64, exponent int) {
-	d64 := math.Float64bits(float64(d))
+	d64 := math.Float64bits(big.Float(d))
 	significand = d64 & kSignificandMask
 	if d64&kExponentMask != 0 { // not denormal
 		significand += kHiddenBit

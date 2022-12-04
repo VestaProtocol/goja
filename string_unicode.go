@@ -5,6 +5,7 @@ import (
 	"hash/maphash"
 	"io"
 	"math"
+	"math/big"
 	"reflect"
 	"strings"
 	"unicode/utf16"
@@ -45,9 +46,7 @@ type unicodeStringBuilder struct {
 	unicode bool
 }
 
-var (
-	InvalidRuneError = errors.New("invalid rune")
-)
+var InvalidRuneError = errors.New("invalid rune")
 
 func (rr *utf16RuneReader) ReadRune() (r rune, size int, err error) {
 	if rr.pos < len(rr.s) {
@@ -323,8 +322,8 @@ func (s unicodeString) ToString() Value {
 	return s
 }
 
-func (s unicodeString) ToFloat() float64 {
-	return math.NaN()
+func (s unicodeString) ToFloat() big.Float {
+	return *big.NewFloat(math.NaN())
 }
 
 func (s unicodeString) ToBoolean() bool {

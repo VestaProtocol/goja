@@ -3,6 +3,7 @@ package goja
 import (
 	"fmt"
 	"math"
+	"math/big"
 )
 
 func (r *Runtime) builtin_Function(args []Value, proto *Object) *Object {
@@ -158,7 +159,7 @@ func (r *Runtime) functionproto_bind(call FunctionCall) Value {
 	fcall := r.toCallable(call.This)
 	construct := obj.self.assertConstructor()
 
-	var l = _positiveZero
+	l := _positiveZero
 	if obj.self.hasOwnPropertyStr("length") {
 		var li int64
 		switch lenProp := nilSafe(obj.self.getStr("length", nil)).(type) {
@@ -174,8 +175,8 @@ func (r *Runtime) functionproto_bind(call FunctionCall) Value {
 			case _negativeZero:
 				// no-op, li == 0
 			default:
-				if !math.IsNaN(float64(lenProp)) {
-					li = int64(math.Abs(float64(lenProp)))
+				if !math.IsNaN(big.Float(lenProp)) {
+					li = int64(math.Abs(big.Float(lenProp)))
 				} // else li = 0
 			}
 		}

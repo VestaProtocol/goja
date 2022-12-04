@@ -4,6 +4,7 @@ import (
 	"hash/maphash"
 	"io"
 	"math"
+	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
@@ -79,20 +80,20 @@ func isRangeErr(err error) bool {
 	return false
 }
 
-func (s asciiString) _toFloat() (float64, error) {
+func (s asciiString) _toFloat() (big.Float, error) {
 	ss := strings.TrimSpace(string(s))
 	if ss == "" {
-		return 0, nil
+		return *big.NewFloat(0), nil
 	}
 	if ss == "-0" {
-		var f float64
-		return -f, nil
+		var f big.Float
+		return *f.Neg(&f), nil
 	}
 	f, err := strconv.ParseFloat(ss, 64)
 	if isRangeErr(err) {
 		err = nil
 	}
-	return f, err
+	return *big.NewFloat(f), err
 }
 
 func (s asciiString) ToInteger() int64 {
@@ -109,7 +110,8 @@ func (s asciiString) ToInteger() int64 {
 	if err != nil {
 		f, err := s._toFloat()
 		if err == nil {
-			return int64(f)
+			k, _ := f.Int64()
+			return k
 		}
 	}
 	return i
@@ -127,23 +129,23 @@ func (s asciiString) String() string {
 	return string(s)
 }
 
-func (s asciiString) ToFloat() float64 {
+func (s asciiString) ToFloat() big.Float {
 	if s == "" {
-		return 0
+		return *big.NewFloat(0)
 	}
 	if s == "Infinity" || s == "+Infinity" {
-		return math.Inf(1)
+		return *big.NewFloat(math.Inf(1))
 	}
 	if s == "-Infinity" {
-		return math.Inf(-1)
+		return *big.NewFloat(math.Inf(-1))
 	}
 	f, err := s._toFloat()
 	if err != nil {
 		i, err := s._toInt()
 		if err == nil {
-			return float64(i)
+			return big.Float(i)
 		}
-		f = math.NaN()
+		f = *big.NewFloat(math.NaN())
 	}
 	return f
 }
@@ -195,7 +197,7 @@ func (s asciiString) Equals(other Value) bool {
 	}
 
 	if o, ok := other.(valueFloat); ok {
-		return s.ToFloat() == float64(o)
+		return s.ToFloat() == big.Float(o)
 	}
 
 	if o, ok := other.(valueBool); ok {

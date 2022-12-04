@@ -2,6 +2,7 @@ package goja
 
 import (
 	"math"
+	"math/big"
 	"reflect"
 	"strconv"
 	"unsafe"
@@ -54,15 +55,16 @@ type typedArray interface {
 	typeMatch(v Value) bool
 }
 
-type uint8Array []uint8
-type uint8ClampedArray []uint8
-type int8Array []int8
-type uint16Array []uint16
-type int16Array []int16
-type uint32Array []uint32
-type int32Array []int32
-type float32Array []float32
-type float64Array []float64
+type (
+	uint8Array        []uint8
+	uint8ClampedArray []uint8
+	int8Array         []int8
+	uint16Array       []uint16
+	int16Array        []int16
+	uint32Array       []uint32
+	int32Array        []int32
+	float64Array      []big.Float
+)
 
 type typedArrayObject struct {
 	baseObject
@@ -361,54 +363,20 @@ func (a *int32Array) typeMatch(v Value) bool {
 	return false
 }
 
-func (a *float32Array) get(idx int) Value {
-	return floatToValue(float64((*a)[idx]))
-}
-
-func (a *float32Array) getRaw(idx int) uint64 {
-	return uint64(math.Float32bits((*a)[idx]))
-}
-
-func (a *float32Array) set(idx int, value Value) {
-	(*a)[idx] = toFloat32(value)
-}
-
-func (a *float32Array) toRaw(v Value) uint64 {
-	return uint64(math.Float32bits(toFloat32(v)))
-}
-
-func (a *float32Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = math.Float32frombits(uint32(v))
-}
-
-func typedFloatLess(x, y float64) bool {
-	xNan := math.IsNaN(x)
-	yNan := math.IsNaN(y)
+func typedFloatLess(x, y big.Float) bool {
+	xx, _ := x.Float64()
+	yy, _ := y.Float64()
+	xNan := math.IsNaN(xx)
+	yNan := math.IsNaN(yy)
 	if yNan {
 		return !xNan
 	} else if xNan {
 		return false
 	}
-	if x == 0 && y == 0 { // handle neg zero
-		return math.Signbit(x)
+	if xx == 0 && yy == 0 { // handle neg zero
+		return math.Signbit(xx)
 	}
-	return x < y
-}
-
-func (a *float32Array) less(i, j int) bool {
-	return typedFloatLess(float64((*a)[i]), float64((*a)[j]))
-}
-
-func (a *float32Array) swap(i, j int) {
-	(*a)[i], (*a)[j] = (*a)[j], (*a)[i]
-}
-
-func (a *float32Array) typeMatch(v Value) bool {
-	switch v.(type) {
-	case valueInt, valueFloat:
-		return true
-	}
-	return false
+	return x.Cmp(&y) == -1
 }
 
 func (a *float64Array) get(idx int) Value {
@@ -416,7 +384,10 @@ func (a *float64Array) get(idx int) Value {
 }
 
 func (a *float64Array) getRaw(idx int) uint64 {
-	return math.Float64bits((*a)[idx])
+	k := (*a)[idx]
+	m, _ := k.Float64()
+
+	return math.Float64bits(m)
 }
 
 func (a *float64Array) set(idx int, value Value) {
@@ -424,11 +395,13 @@ func (a *float64Array) set(idx int, value Value) {
 }
 
 func (a *float64Array) toRaw(v Value) uint64 {
-	return math.Float64bits(v.ToFloat())
+	m := v.ToFloat()
+	k, _ := m.Float64()
+	return math.Float64bits(k)
 }
 
 func (a *float64Array) setRaw(idx int, v uint64) {
-	(*a)[idx] = math.Float64frombits(v)
+	(*a)[idx] = *big.NewFloat(math.Float64frombits(v))
 }
 
 func (a *float64Array) less(i, j int) bool {
@@ -690,7 +663,6 @@ func (r *Runtime) _newTypedArrayObject(buf *arrayBufferObject, offset, length, e
 	o.self = a
 	a.init()
 	return a
-
 }
 
 func (r *Runtime) newUint8ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
@@ -719,10 +691,6 @@ func (r *Runtime) newUint32ArrayObject(buf *arrayBufferObject, offset, length in
 
 func (r *Runtime) newInt32ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
 	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Int32Array, (*int32Array)(unsafe.Pointer(&buf.data)), proto)
-}
-
-func (r *Runtime) newFloat32ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
-	return r._newTypedArrayObject(buf, offset, length, 4, r.global.Float32Array, (*float32Array)(unsafe.Pointer(&buf.data)), proto)
 }
 
 func (r *Runtime) newFloat64ArrayObject(buf *arrayBufferObject, offset, length int, proto *Object) *typedArrayObject {
@@ -764,12 +732,13 @@ func (o *arrayBufferObject) setFloat32(idx int, val float32, byteOrder byteOrder
 	o.setUint32(idx, math.Float32bits(val), byteOrder)
 }
 
-func (o *arrayBufferObject) getFloat64(idx int, byteOrder byteOrder) float64 {
-	return math.Float64frombits(o.getUint64(idx, byteOrder))
+func (o *arrayBufferObject) getFloat64(idx int, byteOrder byteOrder) big.Float {
+	return *big.NewFloat(math.Float64frombits(o.getUint64(idx, byteOrder)))
 }
 
-func (o *arrayBufferObject) setFloat64(idx int, val float64, byteOrder byteOrder) {
-	o.setUint64(idx, math.Float64bits(val), byteOrder)
+func (o *arrayBufferObject) setFloat64(idx int, val big.Float, byteOrder byteOrder) {
+	valf, _ := val.Float64()
+	o.setUint64(idx, math.Float64bits(valf), byteOrder)
 }
 
 func (o *arrayBufferObject) getUint64(idx int, byteOrder byteOrder) uint64 {

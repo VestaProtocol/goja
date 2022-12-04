@@ -3,6 +3,7 @@ package goja
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"sort"
 	"unsafe"
 
@@ -218,7 +219,7 @@ func (r *Runtime) dataViewProto_getByteOffset(call FunctionCall) Value {
 
 func (r *Runtime) dataViewProto_getFloat32(call FunctionCall) Value {
 	if dv, ok := r.toObject(call.This).self.(*dataViewObject); ok {
-		return floatToValue(float64(dv.viewedArrayBuf.getFloat32(dv.getIdxAndByteOrder(r.toIndex(call.Argument(0)), call.Argument(1), 4))))
+		return floatToValue(big.Float(dv.viewedArrayBuf.getFloat32(dv.getIdxAndByteOrder(r.toIndex(call.Argument(0)), call.Argument(1), 4))))
 	}
 	panic(r.NewTypeError("Method DataView.prototype.getFloat32 called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: call.This})))
 }
@@ -1109,7 +1110,8 @@ func (r *Runtime) typedArrayProto_subarray(call FunctionCall) Value {
 		}
 		endIdx := relToIdx(relEnd, l)
 		newLen := max(endIdx-beginIdx, 0)
-		return r.typedArraySpeciesCreate(ta, []Value{ta.viewedArrayBuf.val,
+		return r.typedArraySpeciesCreate(ta, []Value{
+			ta.viewedArrayBuf.val,
 			intToValue((int64(ta.offset) + beginIdx) * int64(ta.elemSize)),
 			intToValue(newLen),
 		}).val
@@ -1558,7 +1560,6 @@ func (r *Runtime) typedArrayCreator(ctor func(args []Value, newTarget, proto *Ob
 }
 
 func (r *Runtime) initTypedArrays() {
-
 	r.global.ArrayBufferPrototype = r.newLazyObject(r.createArrayBufferProto)
 	r.global.ArrayBuffer = r.newLazyObject(r.createArrayBuffer)
 	r.addToGlobal("ArrayBuffer", r.global.ArrayBuffer)

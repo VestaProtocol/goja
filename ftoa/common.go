@@ -10,6 +10,7 @@ package ftoa
 
 import (
 	"math"
+	"math/big"
 )
 
 const (
@@ -30,7 +31,6 @@ const (
 )
 
 func lo0bits(x uint32) (k int) {
-
 	if (x & 7) != 0 {
 		if (x & 1) != 0 {
 			return 0
@@ -67,7 +67,6 @@ func lo0bits(x uint32) (k int) {
 }
 
 func hi0bits(x uint32) (k int) {
-
 	if (x & 0xffff0000) == 0 {
 		k = 16
 		x <<= 16
@@ -100,7 +99,7 @@ func stuffBits(bits []byte, offset int, val uint32) {
 	bits[offset+3] = byte(val)
 }
 
-func d2b(d float64, b []byte) (e, bits int, dblBits []byte) {
+func d2b(d big.Float, b []byte) (e, bits int, dblBits []byte) {
 	dBits := math.Float64bits(d)
 	d0 := uint32(dBits >> 32)
 	d1 := uint32(dBits)

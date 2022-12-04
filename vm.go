@@ -3,6 +3,7 @@ package goja
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"runtime"
 	"strconv"
 	"strings"
@@ -278,28 +279,32 @@ func intToValue(i int64) Value {
 		}
 		return valueInt(i)
 	}
-	return valueFloat(i)
+
+	return valueFloat(*big.NewFloat(float64(i)))
 }
 
-func floatToInt(f float64) (result int64, ok bool) {
-	if (f != 0 || !math.Signbit(f)) && !math.IsInf(f, 0) && f == math.Trunc(f) && f >= -maxInt && f <= maxInt {
-		return int64(f), true
+func floatToInt(f big.Float) (result int64, ok bool) {
+	m, _ := f.Float64()
+	k, _ := f.Int64()
+	if (m != 0 || !math.Signbit(m)) && !math.IsInf(m, 0) && m == math.Trunc(m) && m >= -maxInt && m <= maxInt {
+		return k, true
 	}
 	return 0, false
 }
 
-func floatToValue(f float64) (result Value) {
+func floatToValue(f big.Float) (result Value) {
+	ff, _ := f.Float64()
 	if i, ok := floatToInt(f); ok {
 		return intToValue(i)
 	}
 	switch {
-	case f == 0:
+	case ff == 0:
 		return _negativeZero
-	case math.IsNaN(f):
+	case math.IsNaN(ff):
 		return _NaN
-	case math.IsInf(f, 1):
+	case math.IsInf(ff, 1):
 		return _positiveInf
-	case math.IsInf(f, -1):
+	case math.IsInf(ff, -1):
 		return _negativeInf
 	}
 	return valueFloat(f)
@@ -311,7 +316,7 @@ func assertInt64(v Value) (int64, bool) {
 		return int64(i), true
 	}
 	if f, ok := num.(valueFloat); ok {
-		if i, ok := floatToInt(float64(f)); ok {
+		if i, ok := floatToInt(big.Float(f)); ok {
 			return i, true
 		}
 	}
@@ -655,8 +660,7 @@ func (vm *vm) peek() Value {
 }
 
 func (vm *vm) saveCtx(ctx *context) {
-	ctx.prg, ctx.stash, ctx.privEnv, ctx.newTarget, ctx.result, ctx.pc, ctx.sb, ctx.args, ctx.funcName =
-		vm.prg, vm.stash, vm.privEnv, vm.newTarget, vm.result, vm.pc, vm.sb, vm.args, vm.funcName
+	ctx.prg, ctx.stash, ctx.privEnv, ctx.newTarget, ctx.result, ctx.pc, ctx.sb, ctx.args, ctx.funcName = vm.prg, vm.stash, vm.privEnv, vm.newTarget, vm.result, vm.pc, vm.sb, vm.args, vm.funcName
 }
 
 func (vm *vm) pushCtx() {
@@ -673,8 +677,7 @@ func (vm *vm) pushCtx() {
 }
 
 func (vm *vm) restoreCtx(ctx *context) {
-	vm.prg, vm.funcName, vm.stash, vm.privEnv, vm.newTarget, vm.result, vm.pc, vm.sb, vm.args =
-		ctx.prg, ctx.funcName, ctx.stash, ctx.privEnv, ctx.newTarget, ctx.result, ctx.pc, ctx.sb, ctx.args
+	vm.prg, vm.funcName, vm.stash, vm.privEnv, vm.newTarget, vm.result, vm.pc, vm.sb, vm.args = ctx.prg, ctx.funcName, ctx.stash, ctx.privEnv, ctx.newTarget, ctx.result, ctx.pc, ctx.sb, ctx.args
 }
 
 func (vm *vm) popCtx() {
@@ -1027,10 +1030,14 @@ func (_add) exec(vm *vm) {
 			if rightInt, ok := right.(valueInt); ok {
 				ret = intToValue(int64(leftInt) + int64(rightInt))
 			} else {
-				ret = floatToValue(float64(leftInt) + right.ToFloat())
+				l := big.NewFloat(float64(leftInt))
+				r := big.Float(rightInt.ToFloat())
+				ret = floatToValue(*l.Add(l, &r))
 			}
 		} else {
-			ret = floatToValue(left.ToFloat() + right.ToFloat())
+			l := big.Float(left.ToFloat())
+			r := big.Float(right.ToFloat())
+			ret = floatToValue(*l.Add(&l, &r))
 		}
 	}
 
@@ -1048,6 +1055,8 @@ func (_sub) exec(vm *vm) {
 	left := vm.stack[vm.sp-2]
 
 	var result Value
+	var l big.Float
+	var r big.Float
 
 	if left, ok := left.(valueInt); ok {
 		if right, ok := right.(valueInt); ok {
@@ -1055,8 +1064,10 @@ func (_sub) exec(vm *vm) {
 			goto end
 		}
 	}
+	l = big.Float(left.ToFloat())
+	r = big.Float(right.ToFloat())
+	result = floatToValue(*l.Sub(&l, &r))
 
-	result = floatToValue(left.ToFloat() - right.ToFloat())
 end:
 	vm.sp--
 	vm.stack[vm.sp-1] = result
@@ -1072,6 +1083,8 @@ func (_mul) exec(vm *vm) {
 	right := vm.stack[vm.sp-1]
 
 	var result Value
+	var l big.Float
+	var r big.Float
 
 	if left, ok := assertInt64(left); ok {
 		if right, ok := assertInt64(right); ok {
@@ -1088,8 +1101,9 @@ func (_mul) exec(vm *vm) {
 
 		}
 	}
-
-	result = floatToValue(left.ToFloat() * right.ToFloat())
+	l = big.Float(left.ToFloat())
+	r = big.Float(right.ToFloat())
+	result = floatToValue(*l.Sub(&l, &r))
 
 end:
 	vm.sp--
@@ -1117,21 +1131,24 @@ func (_div) exec(vm *vm) {
 
 	var result Value
 
-	if math.IsNaN(left) || math.IsNaN(right) {
+	l, _ := left.Float64()
+	r, _ := right.Float64()
+
+	if math.IsNaN(l) || math.IsNaN(r) {
 		result = _NaN
 		goto end
 	}
-	if math.IsInf(left, 0) && math.IsInf(right, 0) {
+	if left.IsInf() && right.IsInf() {
 		result = _NaN
 		goto end
 	}
-	if left == 0 && right == 0 {
+	if l == 0 && r == 0 {
 		result = _NaN
 		goto end
 	}
 
-	if math.IsInf(left, 0) {
-		if math.Signbit(left) == math.Signbit(right) {
+	if left.IsInf() {
+		if math.Signbit(l) == math.Signbit(r) {
 			result = _positiveInf
 			goto end
 		} else {
@@ -1139,8 +1156,8 @@ func (_div) exec(vm *vm) {
 			goto end
 		}
 	}
-	if math.IsInf(right, 0) {
-		if math.Signbit(left) == math.Signbit(right) {
+	if right.IsInf() {
+		if math.Signbit(l) == math.Signbit(r) {
 			result = _positiveZero
 			goto end
 		} else {
@@ -1148,8 +1165,8 @@ func (_div) exec(vm *vm) {
 			goto end
 		}
 	}
-	if right == 0 {
-		if math.Signbit(left) == math.Signbit(right) {
+	if r == 0 {
+		if math.Signbit(l) == math.Signbit(r) {
 			result = _positiveInf
 			goto end
 		} else {
@@ -1158,7 +1175,7 @@ func (_div) exec(vm *vm) {
 		}
 	}
 
-	result = floatToValue(left / right)
+	result = floatToValue(*left.Quo(&left, &right))
 
 end:
 	vm.sp--
@@ -1174,6 +1191,13 @@ func (_mod) exec(vm *vm) {
 	left := vm.stack[vm.sp-2]
 	right := vm.stack[vm.sp-1]
 
+	l := left.ToFloat()
+	li, _ := (&l).Int64()
+	r := right.ToFloat()
+	ri, _ := (&r).Int64()
+
+	var m int64
+	var i *big.Float
 	var result Value
 
 	if leftInt, ok := assertInt64(left); ok {
@@ -1192,7 +1216,11 @@ func (_mod) exec(vm *vm) {
 		}
 	}
 
-	result = floatToValue(math.Mod(left.ToFloat(), right.ToFloat()))
+	m = li / ri
+	i = big.NewFloat(float64(m))
+	i = r.Mul(&r, i)
+
+	result = floatToValue(*l.Sub(&l, i))
 end:
 	vm.sp--
 	vm.stack[vm.sp-1] = result
@@ -1215,9 +1243,10 @@ func (_neg) exec(vm *vm) {
 			result = valueInt(-i)
 		}
 	} else {
-		f := operand.ToFloat()
-		if !math.IsNaN(f) {
-			f = -f
+		var f big.Float = operand.ToFloat()
+		ff, _ := f.Float64()
+		if !math.IsNaN(ff) {
+			f = *f.Neg(&f)
 		}
 		result = valueFloat(f)
 	}
@@ -1241,13 +1270,17 @@ var inc _inc
 
 func (_inc) exec(vm *vm) {
 	v := vm.stack[vm.sp-1]
+	var k big.Float
 
 	if i, ok := assertInt64(v); ok {
 		v = intToValue(i + 1)
 		goto end
 	}
 
-	v = valueFloat(v.ToFloat() + 1)
+	k = big.Float(v.ToFloat())
+	k = *k.Add(&k, big.NewFloat(1))
+
+	v = valueFloat(k)
 
 end:
 	vm.stack[vm.sp-1] = v
@@ -1260,13 +1293,14 @@ var dec _dec
 
 func (_dec) exec(vm *vm) {
 	v := vm.stack[vm.sp-1]
-
+	var k big.Float
 	if i, ok := assertInt64(v); ok {
 		v = intToValue(i - 1)
 		goto end
 	}
-
-	v = valueFloat(v.ToFloat() - 1)
+	k = big.Float(v.ToFloat())
+	k = *k.Sub(&k, big.NewFloat(1))
+	v = valueFloat(k)
 
 end:
 	vm.stack[vm.sp-1] = v
@@ -3975,7 +4009,8 @@ func toPrimitive(v Value) Value {
 
 func cmp(px, py Value) Value {
 	var ret bool
-	var nx, ny float64
+	var nx, ny big.Float
+	var nxx, nyy float64
 
 	if xs, ok := px.(valueString); ok {
 		if ys, ok := py.(valueString); ok {
@@ -3994,18 +4029,20 @@ func cmp(px, py Value) Value {
 	nx = px.ToFloat()
 	ny = py.ToFloat()
 
-	if math.IsNaN(nx) || math.IsNaN(ny) {
+	nxx, _ = nx.Float64()
+	nyy, _ = ny.Float64()
+
+	if math.IsNaN(nxx) || math.IsNaN(nyy) {
 		return _undefined
 	}
 
-	ret = nx < ny
+	ret = nx.Cmp(&ny) == -1
 
 end:
 	if ret {
 		return valueTrue
 	}
 	return valueFalse
-
 }
 
 type _op_lt struct{}

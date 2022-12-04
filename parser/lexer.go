@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"unicode"
@@ -200,16 +201,14 @@ func (self *_parser) mark(state *parserState) *parserState {
 	if state == nil {
 		state = &parserState{}
 	}
-	state.tok, state.literal, state.parsedLiteral, state.implicitSemicolon, state.insertSemicolon, state.chr, state.chrOffset, state.offset =
-		self.token, self.literal, self.parsedLiteral, self.implicitSemicolon, self.insertSemicolon, self.chr, self.chrOffset, self.offset
+	state.tok, state.literal, state.parsedLiteral, state.implicitSemicolon, state.insertSemicolon, state.chr, state.chrOffset, state.offset = self.token, self.literal, self.parsedLiteral, self.implicitSemicolon, self.insertSemicolon, self.chr, self.chrOffset, self.offset
 
 	state.errorCount = len(self.errors)
 	return state
 }
 
 func (self *_parser) restore(state *parserState) {
-	self.token, self.literal, self.parsedLiteral, self.implicitSemicolon, self.insertSemicolon, self.chr, self.chrOffset, self.offset =
-		state.tok, state.literal, state.parsedLiteral, state.implicitSemicolon, state.insertSemicolon, state.chr, state.chrOffset, state.offset
+	self.token, self.literal, self.parsedLiteral, self.implicitSemicolon, self.insertSemicolon, self.chr, self.chrOffset, self.offset = state.tok, state.literal, state.parsedLiteral, state.implicitSemicolon, state.insertSemicolon, state.chr, state.chrOffset, state.offset
 	self.errors = self.errors[:state.errorCount]
 }
 
@@ -221,7 +220,6 @@ func (self *_parser) peek() token.Token {
 }
 
 func (self *_parser) scan() (tkn token.Token, literal string, parsedLiteral unistring.String, idx file.Idx) {
-
 	self.implicitSemicolon = false
 
 	for {
@@ -605,7 +603,6 @@ func (self *_parser) scanMantissa(base int) {
 }
 
 func (self *_parser) scanEscape(quote rune) (int, bool) {
-
 	var length, base uint32
 	chr := self.chr
 	switch chr {
@@ -879,14 +876,14 @@ func parseNumberLiteral(literal string) (value interface{}, err error) {
 	if err.(*strconv.NumError).Err == strconv.ErrRange {
 		if len(literal) > 2 && literal[0] == '0' && (literal[1] == 'X' || literal[1] == 'x') {
 			// Could just be a very large number (e.g. 0x8000000000000000)
-			var value float64
+			var value big.Float
 			literal = literal[2:]
 			for _, chr := range literal {
 				digit := digitValue(chr)
 				if digit >= 16 {
 					goto error
 				}
-				value = value*16 + float64(digit)
+				value = value*16 + big.Float(digit)
 			}
 			return value, nil
 		}
@@ -1082,7 +1079,6 @@ func parseStringLiteral(literal string, length int, unicode, strict bool) (unist
 }
 
 func (self *_parser) scanNumericLiteral(decimalPoint bool) (token.Token, string) {
-
 	offset := self.chrOffset
 	tkn := token.NUMBER
 

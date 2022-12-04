@@ -2,6 +2,7 @@ package goja
 
 import (
 	"math"
+	"math/big"
 
 	"github.com/dop251/goja/ftoa"
 )
@@ -142,7 +143,7 @@ func (r *Runtime) number_isFinite(call FunctionCall) Value {
 	case valueInt:
 		return valueTrue
 	case valueFloat:
-		f := float64(arg)
+		f := big.Float(arg)
 		return r.toBoolean(!math.IsInf(f, 0) && !math.IsNaN(f))
 	default:
 		return valueFalse
@@ -154,7 +155,7 @@ func (r *Runtime) number_isInteger(call FunctionCall) Value {
 	case valueInt:
 		return valueTrue
 	case valueFloat:
-		f := float64(arg)
+		f := big.Float(arg)
 		return r.toBoolean(!math.IsNaN(f) && !math.IsInf(f, 0) && math.Floor(f) == f)
 	default:
 		return valueFalse
@@ -162,7 +163,7 @@ func (r *Runtime) number_isInteger(call FunctionCall) Value {
 }
 
 func (r *Runtime) number_isNaN(call FunctionCall) Value {
-	if f, ok := call.Argument(0).(valueFloat); ok && math.IsNaN(float64(f)) {
+	if f, ok := call.Argument(0).(valueFloat); ok && math.IsNaN(big.Float(f)) {
 		return valueTrue
 	}
 	return valueFalse
@@ -206,5 +207,4 @@ func (r *Runtime) initNumber() {
 	o._putProp("parseInt", r.Get("parseInt"), true, false, true)
 	o._putProp("POSITIVE_INFINITY", _positiveInf, false, false, false)
 	r.addToGlobal("Number", r.global.Number)
-
 }

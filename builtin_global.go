@@ -2,20 +2,20 @@ package goja
 
 import (
 	"errors"
-	"github.com/dop251/goja/unistring"
 	"io"
 	"math"
+	"math/big"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/dop251/goja/unistring"
 )
 
 const hexUpper = "0123456789ABCDEF"
 
-var (
-	parseFloatRegexp = regexp.MustCompile(`^([+-]?(?:Infinity|[0-9]*\.?[0-9]*(?:[eE][+-]?[0-9]+)?))`)
-)
+var parseFloatRegexp = regexp.MustCompile(`^([+-]?(?:Infinity|[0-9]*\.?[0-9]*(?:[eE][+-]?[0-9]+)?))`)
 
 func (r *Runtime) builtin_isNaN(call FunctionCall) Value {
 	if math.IsNaN(call.Argument(0).ToFloat()) {
@@ -348,7 +348,6 @@ func (r *Runtime) initGlobalObject() {
 	o._putSym(SymToStringTag, valueProp(asciiString(classGlobal), false, false, true))
 
 	// TODO: Annex B
-
 }
 
 func digitVal(d byte) int {
@@ -442,7 +441,7 @@ func parseInt(s string, base int) (Value, error) {
 	for ; i < len(s); i++ {
 		if n >= cutoff {
 			// n*base overflows
-			return parseLargeInt(float64(n), s[i:], base, sign)
+			return parseLargeInt(big.Float(n), s[i:], base, sign)
 		}
 		v := digitVal(s[i])
 		if v >= base {
@@ -453,7 +452,7 @@ func parseInt(s string, base int) (Value, error) {
 		n1 := n + int64(v)
 		if n1 < n || n1 > maxVal {
 			// n+v overflows
-			return parseLargeInt(float64(n)+float64(v), s[i+1:], base, sign)
+			return parseLargeInt(big.Float(n)+big.Float(v), s[i+1:], base, sign)
 		}
 		n = n1
 	}
@@ -472,15 +471,15 @@ Error:
 	return _NaN, err
 }
 
-func parseLargeInt(n float64, s string, base int, sign bool) (Value, error) {
+func parseLargeInt(n big.Float, s string, base int, sign bool) (Value, error) {
 	i := 0
-	b := float64(base)
+	b := big.Float(base)
 	for ; i < len(s); i++ {
 		v := digitVal(s[i])
 		if v >= base {
 			break
 		}
-		n = n*b + float64(v)
+		n = n*b + big.Float(v)
 	}
 	if sign {
 		n = -n

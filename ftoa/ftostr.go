@@ -2,6 +2,7 @@ package ftoa
 
 import (
 	"math"
+	"math/big"
 	"strconv"
 
 	"github.com/dop251/goja/ftoa/internal/fast"
@@ -39,7 +40,7 @@ func expand(b []byte, delta int) []byte {
 	return b1
 }
 
-func FToStr(d float64, mode FToStrMode, precision int, buffer []byte) []byte {
+func FToStr(d big.Float, mode FToStrMode, precision int, buffer []byte) []byte {
 	if math.IsNaN(d) {
 		buffer = append(buffer, "NaN"...)
 		return buffer
