@@ -1925,7 +1925,7 @@ func (e *compiledClassLiteral) emitGetter(putOnStack bool) {
 					DeclarationList: elt.DeclarationList,
 				}, true)
 				f.typ = funcClsInit
-				//f.lhsName = "<static_initializer>"
+				// f.lhsName = "<static_initializer>"
 				f.homeObjOffset = 1
 				staticElements = append(staticElements, clsElement{
 					body: f,
@@ -2739,7 +2739,6 @@ func (e *compiledBinaryExpr) emitGetter(putOnStack bool) {
 }
 
 func (c *compiler) compileBinaryExpression(v *ast.BinaryExpression) compiledExpr {
-
 	switch v.Operator {
 	case token.LOGICAL_OR:
 		return c.compileLogicalOr(v.Left, v.Right, v.Idx0())
@@ -3123,7 +3122,6 @@ func (c *compiler) compileCallee(v ast.Expression) compiledExpr {
 }
 
 func (c *compiler) compileCallExpression(v *ast.CallExpression) compiledExpr {
-
 	args := make([]compiledExpr, len(v.ArgumentList))
 	isVariadic := false
 	for i, argExpr := range v.ArgumentList {
@@ -3166,8 +3164,7 @@ func (c *compiler) compileNumberLiteral(v *ast.NumberLiteral) compiledExpr {
 	switch num := v.Value.(type) {
 	case int64:
 		val = intToValue(num)
-	case float64:
-		val = floatToValue(num)
+
 	default:
 		c.assert(false, int(v.Idx)-1, "Unsupported number literal type: %T", v.Value)
 		panic("unreachable")

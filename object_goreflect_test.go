@@ -20,7 +20,7 @@ func TestGoReflectGet(t *testing.T) {
 	}
 	r := New()
 	o := O{X: 4, Y: "2"}
-	r.Set("o", o)
+	_ = r.Set("o", o)
 
 	v, err := r.RunString(SCRIPT)
 	if err != nil {
@@ -47,7 +47,7 @@ func TestGoReflectSet(t *testing.T) {
 	}
 	r := New()
 	o := O{X: 4, Y: "2"}
-	r.Set("o", &o)
+	_ = r.Set("o", &o)
 
 	_, err := r.RunString(SCRIPT)
 	if err != nil {
@@ -118,7 +118,6 @@ func TestGoReflectEnumerate(t *testing.T) {
 	if !v.StrictEquals(valueTrue) {
 		t.Fatalf("Expected true, got %v", v)
 	}
-
 }
 
 func TestGoReflectCustomIntUnbox(t *testing.T) {
@@ -365,7 +364,6 @@ func TestGoReflectRedefineFieldSuccess(t *testing.T) {
 	if o.Test != "AAA" {
 		t.Fatalf("Expected 'AAA', got '%s'", o.Test)
 	}
-
 }
 
 func TestGoReflectRedefineFieldNonWritable(t *testing.T) {
@@ -567,7 +565,6 @@ func (jsonTagNamer) MethodName(_ reflect.Type, method reflect.Method) string {
 }
 
 func TestGoReflectCustomNaming(t *testing.T) {
-
 	type testStructWithJsonTags struct {
 		A string `json:"b"` // <-- script sees field "A" as property "b"
 	}
@@ -609,7 +606,6 @@ func TestGoReflectCustomNaming(t *testing.T) {
 }
 
 func TestGoReflectCustomObjNaming(t *testing.T) {
-
 	type testStructWithJsonTags struct {
 		A string `json:"b"` // <-- script sees field "A" as property "b"
 	}
@@ -734,8 +730,7 @@ func TestStructNonAddressable(t *testing.T) {
 	}
 }
 
-type testFieldMapper struct {
-}
+type testFieldMapper struct{}
 
 func (testFieldMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
 	if tag := f.Tag.Get("js"); tag != "" {
@@ -971,7 +966,6 @@ func TestNestedStructSet(t *testing.T) {
 }
 
 func TestStructNonAddressableAnonStruct(t *testing.T) {
-
 	type C struct {
 		Z int64
 		X string
@@ -1012,7 +1006,6 @@ func TestStructNonAddressableAnonStruct(t *testing.T) {
 	if expected != v.String() {
 		t.Fatalf("Expected '%s', got '%s'", expected, v.String())
 	}
-
 }
 
 func TestTagFieldNameMapperInvalidId(t *testing.T) {
@@ -1148,12 +1141,11 @@ func TestGoReflectSymbols(t *testing.T) {
 }
 
 func TestGoReflectSymbolEqualityQuirk(t *testing.T) {
-	type Field struct {
-	}
+	type Field struct{}
 	type S struct {
 		Field *Field
 	}
-	var s = S{
+	s := S{
 		Field: &Field{},
 	}
 	vm := New()
@@ -1231,7 +1223,7 @@ func TestGoReflectUnicodeProps(t *testing.T) {
 
 func TestGoReflectPreserveType(t *testing.T) {
 	vm := New()
-	var expect = time.Duration(math.MaxInt64)
+	expect := time.Duration(math.MaxInt64)
 	vm.Set(`make`, func() time.Duration {
 		return expect
 	})
@@ -1287,7 +1279,6 @@ func TestGoReflectCopyOnWrite(t *testing.T) {
 			throw new Error("tmp.Field (2): " + tmp.Field);
 		}
 	`)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1306,7 +1297,6 @@ func TestReflectSetReflectValue(t *testing.T) {
 			throw new Error();
 		}
 	`)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1429,38 +1419,12 @@ func TestGoReflectToPrimitive(t *testing.T) {
 			f("ui.valueOf()", intToValue(1), t)
 		})
 
-		type Float float64
-		var fl Float = 1.1
-
-		t.Run("Float", func(t *testing.T) {
-			vm.Set("fl", fl)
-			f("+fl", floatToValue(1.1), t)
-			f("`${fl}`", asciiString("1.1"), t)
-			f("fl.toString()", asciiString("1.1"), t)
-			f("fl.valueOf()", floatToValue(1.1), t)
-		})
-
-		t.Run("*Float", func(t *testing.T) {
-			vm.Set("fl", &fl)
-			f("+fl", floatToValue(1.1), t)
-			f("`${fl}`", asciiString("1.1"), t)
-			f("fl.toString()", asciiString("1.1"), t)
-			f("fl.valueOf()", floatToValue(1.1), t)
-		})
-
-		fl = Float(math.Inf(1))
-		t.Run("FloatInf", func(t *testing.T) {
-			vm.Set("fl", fl)
-			f("+fl", _positiveInf, t)
-			f("fl.toString()", asciiString("Infinity"), t)
-		})
-
 		type Empty struct{}
 
 		var e Empty
 		t.Run("Empty", func(t *testing.T) {
 			vm.Set("e", &e)
-			f("+e", _NaN, t)
+			f("+e", Null(), t)
 			f("`${e}`", asciiString("[object Object]"), t)
 			f("e.toString()", asciiString("[object Object]"), t)
 			f("e.valueOf()", vm.ToValue(&e), t)
@@ -1508,7 +1472,7 @@ func TestGoReflectToPrimitive(t *testing.T) {
 			f("`${s}`", asciiString("S"), t)
 			f("s.toString()", asciiString("S"), t)
 			f("s.valueOf()", asciiString("S"), t)
-			f("+s", _NaN, t)
+			f("+s", Null(), t)
 		})
 
 		t.Run("*String", func(t *testing.T) {
@@ -1516,13 +1480,12 @@ func TestGoReflectToPrimitive(t *testing.T) {
 			f("`${s}`", asciiString("S"), t)
 			f("s.toString()", asciiString("S"), t)
 			f("s.valueOf()", asciiString("S"), t)
-			f("+s", _NaN, t)
+			f("+s", Null(), t)
 		})
 	})
 }
 
-type testGoReflectFuncRt struct {
-}
+type testGoReflectFuncRt struct{}
 
 func (*testGoReflectFuncRt) M(call FunctionCall, r *Runtime) Value {
 	if r == nil {
@@ -1535,7 +1498,7 @@ func (*testGoReflectFuncRt) C(call ConstructorCall, r *Runtime) *Object {
 	if r == nil {
 		panic(typeError("Runtime is nil in constructor"))
 	}
-	call.This.Set("r", call.Argument(0))
+	_ = call.This.Set("r", call.Argument(0))
 	return nil
 }
 

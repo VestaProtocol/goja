@@ -54,8 +54,7 @@ func (tfm tagFieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) strin
 	return m.Name
 }
 
-type uncapFieldNameMapper struct {
-}
+type uncapFieldNameMapper struct{}
 
 func (u uncapFieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
 	return uncapitalize(f.Name)
@@ -137,10 +136,7 @@ func (o *objectGoReflect) init() {
 		o.class = classNumber
 		o.prototype = o.val.runtime.global.NumberPrototype
 		o.valueOf = o._valueOfUint
-	case reflect.Float32, reflect.Float64:
-		o.class = classNumber
-		o.prototype = o.val.runtime.global.NumberPrototype
-		o.valueOf = o._valueOfFloat
+
 	default:
 		o.class = classObject
 		o.prototype = o.val.runtime.global.ObjectPrototype
@@ -419,10 +415,6 @@ func (o *objectGoReflect) _valueOfBool() Value {
 	} else {
 		return valueFalse
 	}
-}
-
-func (o *objectGoReflect) _valueOfFloat() Value {
-	return floatToValue(o.fieldsValue.Float())
 }
 
 func (o *objectGoReflect) _toStringStringer() Value {

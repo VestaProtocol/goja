@@ -2,7 +2,6 @@ package goja
 
 import (
 	"hash/maphash"
-	"math"
 	"strconv"
 	"testing"
 )
@@ -16,20 +15,17 @@ func testMapHashVal(v1, v2 Value, expected bool, t *testing.T) {
 }
 
 func TestMapHash(t *testing.T) {
-	testMapHashVal(_NaN, _NaN, true, t)
 	testMapHashVal(valueTrue, valueFalse, false, t)
 	testMapHashVal(valueTrue, valueTrue, true, t)
-	testMapHashVal(intToValue(0), _negativeZero, true, t)
 	testMapHashVal(asciiString("Test"), asciiString("Test"), true, t)
 	testMapHashVal(newStringValue("Тест"), newStringValue("Тест"), true, t)
-	testMapHashVal(floatToValue(1.2345), floatToValue(1.2345), true, t)
 	testMapHashVal(SymIterator, SymToStringTag, false, t)
 	testMapHashVal(SymIterator, SymIterator, true, t)
 
 	// The following tests introduce indeterministic behaviour
-	//testMapHashVal(asciiString("Test"), asciiString("Test1"), false, t)
-	//testMapHashVal(newStringValue("Тест"), asciiString("Test"), false, t)
-	//testMapHashVal(newStringValue("Тест"), newStringValue("Тест1"), false, t)
+	// testMapHashVal(asciiString("Test"), asciiString("Test1"), false, t)
+	// testMapHashVal(newStringValue("Тест"), asciiString("Test"), false, t)
+	// testMapHashVal(newStringValue("Тест"), newStringValue("Тест1"), false, t)
 }
 
 func TestOrderedMap(t *testing.T) {
@@ -81,26 +77,18 @@ func TestOrderedMap(t *testing.T) {
 func TestOrderedMapCollision(t *testing.T) {
 	m := newOrderedMap(&maphash.Hash{})
 	n1 := uint64(123456789)
-	n2 := math.Float64frombits(n1)
 	n1Key := intToValue(int64(n1))
-	n2Key := floatToValue(n2)
 	m.set(n1Key, asciiString("n1"))
-	m.set(n2Key, asciiString("n2"))
 	if m.size == len(m.hashTable) {
 		t.Fatal("Expected a collision but there wasn't one")
 	}
-	if n2Val := m.get(n2Key); !asciiString("n2").SameAs(n2Val) {
-		t.Fatalf("unexpected n2Val: %v", n2Val)
-	}
+
 	if n1Val := m.get(n1Key); !asciiString("n1").SameAs(n1Val) {
 		t.Fatalf("unexpected nVal: %v", n1Val)
 	}
 
 	if !m.remove(n1Key) {
 		t.Fatal("removing n1Key returned false")
-	}
-	if n2Val := m.get(n2Key); !asciiString("n2").SameAs(n2Val) {
-		t.Fatalf("2: unexpected n2Val: %v", n2Val)
 	}
 }
 
