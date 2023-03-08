@@ -3877,7 +3877,7 @@ func toPrimitiveNumber(v Value) Value {
 
 func cmp(px, py Value) Value {
 	var ret bool
-	var nx, ny float64
+	var nx, ny int64
 
 	if xs, ok := px.(valueString); ok {
 		if ys, ok := py.(valueString); ok {

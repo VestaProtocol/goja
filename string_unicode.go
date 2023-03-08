@@ -4,7 +4,6 @@ import (
 	"errors"
 	"hash/maphash"
 	"io"
-	"math"
 	"reflect"
 	"strings"
 	"unicode/utf16"
@@ -319,10 +318,6 @@ func (s unicodeString) toString() valueString {
 
 func (s unicodeString) ToString() Value {
 	return s
-}
-
-func (s unicodeString) ToFloat() float64 {
-	return math.NaN()
 }
 
 func (s unicodeString) ToBoolean() bool {

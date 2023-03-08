@@ -8,7 +8,6 @@ import (
 	"hash/maphash"
 	"math"
 	"math/bits"
-	"math/rand"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -67,8 +66,6 @@ type global struct {
 	Int16Array        *Object
 	Uint32Array       *Object
 	Int32Array        *Object
-	Float32Array      *Object
-	Float64Array      *Object
 
 	WeakSet *Object
 	WeakMap *Object
@@ -156,15 +153,12 @@ func ToFlag(b bool) Flag {
 	return FLAG_FALSE
 }
 
-type RandSource func() float64
-
 type Now func() time.Time
 
 type Runtime struct {
 	global          global
 	globalObject    *Object
 	stringSingleton *stringObject
-	rand            RandSource
 	now             Now
 	_collator       *collate.Collator
 	parserOptions   []parser.Option
@@ -393,7 +387,6 @@ func (r *Runtime) createIterProto(val *Object) objectImpl {
 }
 
 func (r *Runtime) init() {
-	r.rand = rand.Float64
 	r.now = time.Now
 	r.global.ObjectPrototype = r.newBaseObject(nil, classObject).val
 	r.globalObject = r.NewObject()
@@ -1720,8 +1713,7 @@ func (r *Runtime) toValue(i interface{}, origValue reflect.Value) Value {
 		if value.Type().NumMethod() == 0 {
 			switch value.Type().Key().Kind() {
 			case reflect.String, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-				reflect.Float64, reflect.Float32:
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
 				obj := &Object{runtime: r}
 				m := &objectGoMapReflect{
@@ -2181,11 +2173,6 @@ func (r *Runtime) Get(name string) (ret Value) {
 		}
 	})
 	return
-}
-
-// SetRandSource sets random source for this Runtime. If not called, the default math/rand is used.
-func (r *Runtime) SetRandSource(source RandSource) {
-	r.rand = source
 }
 
 // SetTimeSource sets the current time source for this Runtime.

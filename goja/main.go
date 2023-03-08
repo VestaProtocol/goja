@@ -1,13 +1,10 @@
 package main
 
 import (
-	crand "crypto/rand"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"runtime/debug"
 	"runtime/pprof"
@@ -43,14 +40,6 @@ func load(vm *goja.Runtime, call goja.FunctionCall) goja.Value {
 	return v
 }
 
-func newRandSource() goja.RandSource {
-	var seed int64
-	if err := binary.Read(crand.Reader, binary.LittleEndian, &seed); err != nil {
-		panic(fmt.Errorf("Could not read random bytes: %v", err))
-	}
-	return rand.New(rand.NewSource(seed)).Float64
-}
-
 func run() error {
 	filename := flag.Arg(0)
 	src, err := readSource(filename)
@@ -63,7 +52,6 @@ func run() error {
 	}
 
 	vm := goja.New()
-	vm.SetRandSource(newRandSource())
 
 	new(require.Registry).Enable(vm)
 	console.Enable(vm)

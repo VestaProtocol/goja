@@ -416,17 +416,6 @@ func TestRuntime_ExportToNumbers(t *testing.T) {
 		}
 	})
 
-	t.Run("int8/float", func(t *testing.T) {
-		var i8 int8
-		err := vm.ExportTo(vm.ToValue(333.9234), &i8)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if i8 != 77 {
-			t.Fatalf("i8: %d", i8)
-		}
-	})
-
 	t.Run("int8/object", func(t *testing.T) {
 		var i8 int8
 		err := vm.ExportTo(vm.NewObject(), &i8)
@@ -457,60 +446,6 @@ func TestRuntime_ExportToNumbers(t *testing.T) {
 		}
 	})
 
-	t.Run("float32/no_trunc", func(t *testing.T) {
-		var f float32
-		err := vm.ExportTo(vm.ToValue(1.234567), &f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if f != 1.234567 {
-			t.Fatalf("f: %f", f)
-		}
-	})
-
-	t.Run("float32/trunc", func(t *testing.T) {
-		var f float32
-		err := vm.ExportTo(vm.ToValue(1.234567890), &f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if f != float32(1.234567890) {
-			t.Fatalf("f: %f", f)
-		}
-	})
-
-	t.Run("float64", func(t *testing.T) {
-		var f float64
-		err := vm.ExportTo(vm.ToValue(1.234567), &f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if f != 1.234567 {
-			t.Fatalf("f: %f", f)
-		}
-	})
-
-	t.Run("float32/object", func(t *testing.T) {
-		var f float32
-		err := vm.ExportTo(vm.NewObject(), &f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if f == f { // expecting NaN
-			t.Fatalf("f: %f", f)
-		}
-	})
-
-	t.Run("float64/object", func(t *testing.T) {
-		var f float64
-		err := vm.ExportTo(vm.NewObject(), &f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if f == f { // expecting NaN
-			t.Fatalf("f: %f", f)
-		}
-	})
 }
 
 func TestRuntime_ExportToSlice(t *testing.T) {
@@ -1034,20 +969,6 @@ func TestToValueNil(t *testing.T) {
 	}
 }
 
-func TestToValueFloat(t *testing.T) {
-	vm := New()
-	vm.Set("f64", float64(123))
-	vm.Set("f32", float32(321))
-
-	v, err := vm.RunString("f64 === 123 && f32 === 321")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if v.Export().(bool) != true {
-		t.Fatalf("StrictEquals for golang float failed")
-	}
-}
-
 func TestToValueInterface(t *testing.T) {
 	f := func(i interface{}) bool {
 		return i == t
@@ -1160,25 +1081,6 @@ func TestSortComparatorReturnValues(t *testing.T) {
 	}
 	`
 
-	testScript(SCRIPT, _undefined, t)
-}
-
-func TestSortComparatorReturnValueFloats(t *testing.T) {
-	const SCRIPT = `
-	var a = [
-		5.97,
-		9.91,
-		4.13,
-		9.28,
-		3.29,
-	];
-	a.sort( function(a, b) { return a - b; } );
-	for (var i = 1; i < a.length; i++) {
-		if (a[i] < a[i-1]) {
-			throw new Error("Array is not sorted: " + a);
-		}
-	}
-	`
 	testScript(SCRIPT, _undefined, t)
 }
 

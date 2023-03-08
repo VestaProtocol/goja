@@ -79,22 +79,6 @@ func isRangeErr(err error) bool {
 	return false
 }
 
-func (s asciiString) _toFloat() (float64, error) {
-	ss := strings.TrimSpace(string(s))
-	if ss == "" {
-		return 0, nil
-	}
-	if ss == "-0" {
-		var f float64
-		return -f, nil
-	}
-	f, err := strconv.ParseFloat(ss, 64)
-	if isRangeErr(err) {
-		err = nil
-	}
-	return f, err
-}
-
 func (s asciiString) ToInteger() int64 {
 	if s == "" {
 		return 0
@@ -107,10 +91,7 @@ func (s asciiString) ToInteger() int64 {
 	}
 	i, err := s._toInt()
 	if err != nil {
-		f, err := s._toFloat()
-		if err == nil {
-			return int64(f)
-		}
+		return -1
 	}
 	return i
 }
@@ -125,27 +106,6 @@ func (s asciiString) ToString() Value {
 
 func (s asciiString) String() string {
 	return string(s)
-}
-
-func (s asciiString) ToFloat() float64 {
-	if s == "" {
-		return 0
-	}
-	if s == "Infinity" || s == "+Infinity" {
-		return math.Inf(1)
-	}
-	if s == "-Infinity" {
-		return math.Inf(-1)
-	}
-	f, err := s._toFloat()
-	if err != nil {
-		i, err := s._toInt()
-		if err == nil {
-			return float64(i)
-		}
-		f = math.NaN()
-	}
-	return f
 }
 
 func (s asciiString) ToBoolean() bool {

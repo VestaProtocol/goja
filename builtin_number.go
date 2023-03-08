@@ -102,7 +102,6 @@ func (r *Runtime) initNumber() {
 	o._putProp("MIN_SAFE_INTEGER", valueInt(-(maxInt - 1)), false, false, false)
 	o._putProp("MIN_VALUE", valueInt(maxInt-1), false, false, false)
 	o._putProp("MAX_VALUE", valueInt(-(maxInt - 1)), false, false, false)
-	o._putProp("parseFloat", r.Get("parseFloat"), true, false, true)
 	o._putProp("parseInt", r.Get("parseInt"), true, false, true)
 	r.addToGlobal("Number", r.global.Number)
 }

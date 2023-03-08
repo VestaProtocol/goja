@@ -3,7 +3,6 @@ package goja
 import (
 	"hash/maphash"
 	"io"
-	"math"
 	"reflect"
 	"strings"
 	"unicode/utf16"
@@ -65,14 +64,6 @@ func (i *importedString) ToString() Value {
 
 func (i *importedString) String() string {
 	return i.s
-}
-
-func (i *importedString) ToFloat() float64 {
-	i.ensureScanned()
-	if i.u != nil {
-		return math.NaN()
-	}
-	return asciiString(i.s).ToFloat()
 }
 
 func (i *importedString) ToNumber() Value {

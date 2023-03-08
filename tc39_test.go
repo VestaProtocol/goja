@@ -82,9 +82,6 @@ var (
 		"test/built-ins/Date/prototype/toISOString/15.9.5.43-0-9.js":  true,
 		"test/built-ins/Date/prototype/toISOString/15.9.5.43-0-10.js": true,
 
-		// floating point date calculations
-		"test/built-ins/Date/UTC/fp-evaluation-order.js": true,
-
 		// quantifier integer limit in regexp
 		"test/built-ins/RegExp/quantifier-integer-limit.js": true,
 

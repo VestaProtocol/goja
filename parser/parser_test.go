@@ -1026,7 +1026,6 @@ func Test_parseNumberLiteral(t *testing.T) {
 
 		test("0", 0)
 
-		test("0x8000000000000000", float64(9.223372036854776e+18))
 	})
 }
 

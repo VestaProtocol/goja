@@ -3,7 +3,6 @@ package goja
 import (
 	"errors"
 	"io"
-	"math"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -329,7 +328,6 @@ func digitVal(d byte) int {
 func parseInt(s string, base int) (Value, error) {
 	var n int64
 	var err error
-	var cutoff, maxVal int64
 	var sign bool
 	i := 0
 
@@ -386,37 +384,6 @@ func parseInt(s string, base int) (Value, error) {
 		goto Error
 	}
 
-	// Cutoff is the smallest number such that cutoff*base > maxInt64.
-	// Use compile-time constants for common cases.
-	switch base {
-	case 10:
-		cutoff = math.MaxInt64/10 + 1
-	case 16:
-		cutoff = math.MaxInt64/16 + 1
-	default:
-		cutoff = math.MaxInt64/int64(base) + 1
-	}
-
-	maxVal = math.MaxInt64
-	for ; i < len(s); i++ {
-		if n >= cutoff {
-			// n*base overflows
-			return parseLargeInt(float64(n), s[i:], base, sign)
-		}
-		v := digitVal(s[i])
-		if v >= base {
-			break
-		}
-		n *= int64(base)
-
-		n1 := n + int64(v)
-		if n1 < n || n1 > maxVal {
-			// n+v overflows
-			return parseLargeInt(float64(n)+float64(v), s[i+1:], base, sign)
-		}
-		n = n1
-	}
-
 	if i == 0 {
 		err = strconv.ErrSyntax
 		goto Error
@@ -429,22 +396,6 @@ func parseInt(s string, base int) (Value, error) {
 
 Error:
 	return Null(), err
-}
-
-func parseLargeInt(n float64, s string, base int, sign bool) (Value, error) {
-	i := 0
-	b := float64(base)
-	for ; i < len(s); i++ {
-		v := digitVal(s[i])
-		if v >= base {
-			break
-		}
-		n = n*b + float64(v)
-	}
-	if sign {
-		n = -n
-	}
-	return valueInt(n), nil
 }
 
 var (
