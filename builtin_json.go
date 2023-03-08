@@ -55,7 +55,10 @@ func (r *Runtime) builtinJSON_decodeToken(d *json.Decoder, tok json.Token) (Valu
 		return _null, nil
 	case string:
 		return newStringValue(tok), nil
-
+	case float64:
+		return valueInt(int(tok)), nil
+	case float32:
+		return valueInt(int(tok)), nil
 	case bool:
 		if tok {
 			return valueTrue, nil
